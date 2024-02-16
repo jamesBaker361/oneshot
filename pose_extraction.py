@@ -250,7 +250,6 @@ def draw_pose(keypoints, img):
     :params keypoints: the shape should be equal to [17,2]
     :params img:
     """
-    print(f"img.shape : {img.shape}")
     assert keypoints.shape == (NUM_KPTS, 2)
     for i in range(len(SKELETON)):
         kpt_a, kpt_b = SKELETON[i][0], SKELETON[i][1]
