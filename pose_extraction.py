@@ -366,7 +366,7 @@ def get_pose_pair(pil_img):
                     draw_pose(kpt, image_bgr)  # draw the poses
                     draw_pose(kpt, black_img)
 
-    return Image.fromarray(black_img),Image.fromarray(image_bgr)
+    return Image.fromarray(black_img),Image.fromarray(image_bgr),pred_boxes
 
 
 # local machine
@@ -386,6 +386,6 @@ train_transforms = transforms.Compose(
     )
 
 pil_img=train_transforms(row["image"])
-black,color=get_pose_pair(pil_img)
+black,color,_=get_pose_pair(pil_img)
 black.save("black.png")
 color.save("color.png")
