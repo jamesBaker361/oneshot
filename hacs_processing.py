@@ -13,6 +13,7 @@ import cv2
 import json
 from pytube import YouTube
 from pose_extraction import get_pose_pair
+from  pytube.exceptions import AgeRestrictedError
 import argparse
 
 parser = argparse.ArgumentParser(description="making our person data")
@@ -94,18 +95,20 @@ def create_dataset(args)-> Dataset:
         json_database=json.load(file)["database"]
     for key,clip_dict in json_database.items():
         print(key)
-        #try:
-        src_image_list,src_pose_list,target_image_list,label_list=process_clip_dict(clip_dict)
-        '''print(f"\t{key} success")
-        except Exception as err:
-            print(f"\t{key} exception")
-            print(err)'''
-        data_dict["src_image"]+=src_image_list
-        data_dict["src_pose"]+=src_pose_list
-        data_dict["target_image"]+=target_image_list
-        data_dict["label"]+=label_list
-        if len(data_dict["src_image"])>args.limit:
-            break
+        try:
+            src_image_list,src_pose_list,target_image_list,label_list=process_clip_dict(clip_dict)
+            '''print(f"\t{key} success")
+            except Exception as err:
+                print(f"\t{key} exception")
+                print(err)'''
+            data_dict["src_image"]+=src_image_list
+            data_dict["src_pose"]+=src_pose_list
+            data_dict["target_image"]+=target_image_list
+            data_dict["label"]+=label_list
+            if len(data_dict["src_image"])>args.limit:
+                break
+        except AgeRestrictedError as age_error:
+            print(f"age restriction {key}")
 
     return Dataset.from_dict(data_dict)
 
