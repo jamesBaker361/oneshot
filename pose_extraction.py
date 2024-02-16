@@ -368,24 +368,24 @@ def get_pose_pair(pil_img):
 
     return Image.fromarray(black_img),Image.fromarray(image_bgr),pred_boxes
 
+if __name__=='__main__':
+    # local machine
+    # image_path = '/content/WechatIMG152.jpeg'
+    # image_bgr = cv2.imread(img_path)
+    # main(image_bgr, save_path)
+    data=load_dataset("jlbaker361/spider-500",split="train")
+    for row in data:
+        break
 
-# local machine
-# image_path = '/content/WechatIMG152.jpeg'
-# image_bgr = cv2.imread(img_path)
-# main(image_bgr, save_path)
-data=load_dataset("jlbaker361/spider-500",split="train")
-for row in data:
-    break
+    train_transforms = transforms.Compose(
+            [
+                transforms.Resize(512, interpolation=transforms.InterpolationMode.BILINEAR),
+                transforms.CenterCrop(512),
+                #transforms.Resize((256,192), interpolation=transforms.InterpolationMode.BILINEAR),
+            ]
+        )
 
-train_transforms = transforms.Compose(
-        [
-            transforms.Resize(512, interpolation=transforms.InterpolationMode.BILINEAR),
-            transforms.CenterCrop(512),
-            #transforms.Resize((256,192), interpolation=transforms.InterpolationMode.BILINEAR),
-        ]
-    )
-
-pil_img=train_transforms(row["image"])
-black,color,_=get_pose_pair(pil_img)
-black.save("black.png")
-color.save("color.png")
+    pil_img=train_transforms(row["image"])
+    black,color,_=get_pose_pair(pil_img)
+    black.save("black.png")
+    color.save("color.png")
