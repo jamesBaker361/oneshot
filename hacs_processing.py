@@ -117,3 +117,4 @@ if __name__=='__main__':
     print(args)
     hf_dataset=create_dataset(args)
     hf_dataset.push_to_hub("jlbaker361/hacs-segment-pairs")
+    print("all done :)")
