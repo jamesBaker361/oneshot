@@ -13,7 +13,7 @@ import cv2
 import json
 from pytube import YouTube
 from pose_extraction import get_pose_pair
-from  pytube.exceptions import AgeRestrictedError
+from  pytube.exceptions import AgeRestrictedError,VideoPrivate
 import argparse
 
 parser = argparse.ArgumentParser(description="making our person data")
@@ -107,8 +107,8 @@ def create_dataset(args)-> Dataset:
             data_dict["label"]+=label_list
             if len(data_dict["src_image"])>args.limit:
                 break
-        except AgeRestrictedError as age_error:
-            print(f"age restriction {key}")
+        except (AgeRestrictedError,VideoPrivate) as error:
+            print(f"{key} {error}")
 
     return Dataset.from_dict(data_dict)
 
