@@ -16,6 +16,9 @@ from pose_extraction import get_pose_pair
 import argparse
 
 parser = argparse.ArgumentParser(description="making our person data")
+parser.add_argument("--filepath",type=str,default="hacs_segments.json")
+parser.add_argument("--limit",type=int,default=4)
+parser.add_argument("--pad",action="store_true",default=False)
 
 def extract_frames(video, start:float, end:float)->list:
     '''
@@ -77,7 +80,7 @@ def process_clip_dict(clip_dict: object)-> tuple:
 
 
 
-def create_dataset(filepath:str,limit:int)-> Dataset:
+def create_dataset(args)-> Dataset:
     '''
     given filepath, parses json into object and processes each clip
     '''
@@ -87,7 +90,7 @@ def create_dataset(filepath:str,limit:int)-> Dataset:
         "target_image":[],
         "label":[]
     }
-    with open(filepath, "r") as file:
+    with open(args.filepath, "r") as file:
         json_database=json.load(file)["database"]
     for key,clip_dict in json_database.items():
         print(key)
@@ -101,11 +104,13 @@ def create_dataset(filepath:str,limit:int)-> Dataset:
         data_dict["src_pose"]+=src_pose_list
         data_dict["target_image"]+=target_image_list
         data_dict["label"]+=label_list
-        if len(data_dict["src_image"])>limit:
+        if len(data_dict["src_image"])>args.limit:
             break
 
     return Dataset.from_dict(data_dict)
 
 if __name__=='__main__':
-    hf_dataset=create_dataset("hacs_segments.json",3)
+    args = parser.parse_args()
+    print(args)
+    hf_dataset=create_dataset(args)
     hf_dataset.push_to_hub("jlbaker361/hacs-segment-pairs")
