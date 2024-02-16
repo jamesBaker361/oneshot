@@ -8,12 +8,30 @@ import torch
 torch.hub.set_dir("/scratch/jlb638/torch_hub_cache")
 from PIL import Image
 from datasets import load_dataset, Dataset
+import cv2
+import json
+from pytube import YouTube
+from pose_extraction import get_pose_pair
 
-def extract_frames(video, start, end)->list:
+def extract_frames(video, start:float, end:float)->list:
     '''
-    given video and two timestamps, gets a list of pil images for each second
+    given video and two timestamps, gets first and last frames
     '''
-    return []
+    fps  = video.get(cv2.CAP_PROP_FPS)
+    count=0
+    success=1
+    first=None
+    last=None
+    while success:
+        success, image = video.read()
+        count += 1
+        second=count/fps
+        if second>start and first is None:
+            first=image
+        if second >end:
+            return first,image
+
+    return first,last
 
 def process_clip_dict(clip_dict: object)-> tuple:
     '''
@@ -30,11 +48,59 @@ def process_clip_dict(clip_dict: object)-> tuple:
     then we add start_frame, end_frame_pose and end_frame to their lists
     then we return the 3 lists
     '''
-    return [],[],[]
+    src_image_list,src_pose_list,target_image_list=[],[],[]
+    yt=YouTube(clip_dict["url"])
+    temp_path="tmp.mp4"
+    stream=yt.streams.filter(file_extension='mp4')[0]
+    stream.download(filename=temp_path)
+    for anno in clip_dict["annotations"]:
+        video = cv2.VideoCapture(temp_path)
+        [start,end]=anno["segment"]
+        first,last=extract_frames(video,start,end)
+        if first is None:
+            print("first is none")
+        if last is None:
+            print("last is none")
+        first_black, first_color,first_pred_boxes=get_pose_pair(first)
+        if len(first_pred_boxes)==1 and last is not None:
+            last_black,_,last_pred_boxes=get_pose_pair(last)
+            if len(last_pred_boxes)==1:
+                first=Image.fromarray(cv2.cvtColor(first, cv2.COLOR_BGR2RGB))
+                last=Image.fromarray(cv2.cvtColor(last, cv2.COLOR_BGR2RGB))
+                src_image_list.append(first)
+                src_pose_list.append(last_black)
+                target_image_list.append(last)
+    return src_image_list,src_pose_list,target_image_list
+
+
 
 def create_dataset(filepath:str)-> Dataset:
     '''
     given filepath, parses json into object and processes each clip
     '''
-    
-    return {}
+    data_dict={
+        "src_image":[],
+        "src_pose":[],
+        "target_image":[]
+    }
+    with open(filepath, "r") as file:
+        json_database=json.load(file)["database"]
+    for key,clip_dict in json_database.items():
+        print(key)
+        #try:
+        src_image_list,src_pose_list,target_image_list=process_clip_dict(clip_dict)
+        '''print(f"\t{key} success")
+        except Exception as err:
+            print(f"\t{key} exception")
+            print(err)'''
+        data_dict["src_image"]+=src_image_list
+        data_dict["src_pose"]+=src_pose_list
+        data_dict["target_image"]+=target_image_list
+        if len(data_dict["src_image"])>3:
+            break
+
+    return Dataset.from_dict(data_dict)
+
+if __name__=='__main__':
+    hf_dataset=create_dataset("hacs_segments.json")
+    hf_dataset.push_to_hub("jlbaker361/hacs-segment-pairs")
