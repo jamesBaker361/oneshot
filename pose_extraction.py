@@ -342,7 +342,7 @@ def get_pose_pair(pil_img):
     image_bgr=np.array(pil_img)
     box_model.to(device)
     box_model.eval()
-    model = torch.hub.load('yangsenius/TransPose:main', 'tph_a4_256x192', pretrained=True)
+    model = torch.hub.load('yangsenius/TransPose:main', 'tph_a4_256x192', pretrained=True, verbose=False)
 
     img_dimensions = (256, 192)
 
